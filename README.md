@@ -1,98 +1,112 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Fitness Tracker Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Project**
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Description**: Production-ready NestJS backend for a mobile fitness tracker, implementing JWT auth, MongoDB persistence (Mongoose), workout CRUD, user profiles, and OpenAI-powered coaching.
 
-## Description
+**Features**
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Authentication**: JWT-based sign-up, sign-in, and protected routes.
+- **Persistence**: Mongoose schemas for users and workouts with ownership enforcement.
+- **Workouts**: Create, read, update, delete, pagination, recent history, and stats.
+- **AI Coaching**: OpenAI-driven coaching endpoint and SSE-compatible streaming support.
+- **Validation & Errors**: DTO validation via `class-validator` and global error handling.
 
-## Project setup
+**Prerequisites**
+
+- **Node.js**: v16+ recommended.
+- **MongoDB**: Local or remote instance reachable via `MONGO_URI`.
+
+**Install**
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+**Required Dependencies**
+
+- **Runtime**: `@nestjs/config`, `@nestjs/mongoose`, `mongoose`, `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `bcrypt`, `class-validator`, `class-transformer`, `openai`
+- **Dev**: `@types/bcrypt`, `@types/passport-jwt`
+
+You can install them with:
+
+```bash
+npm install @nestjs/config @nestjs/mongoose mongoose @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt class-validator class-transformer openai
+npm install -D @types/bcrypt @types/passport-jwt
+```
+
+**Environment**
+
+- **Create**: copy `.env.example` → `.env` and fill values.
+- **Important vars**:
+  - `PORT` — server port (default: `3000`)
+  - `MONGO_URI` — MongoDB connection string
+  - `JWT_SECRET` — secret for signing JWTs
+  - `JWT_EXPIRES_IN` — token expiry (e.g., `7d`)
+  - `OPENAI_API_KEY` — API key for OpenAI
+  - `OPENAI_MODEL` — model to use (e.g., `gpt-4.1-mini`)
+
+**Run**
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
-# production mode
-$ npm run start:prod
+# production
+npm run start:prod
 ```
 
-## Run tests
+**Build & Test**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run build
+npm run test
+npm run test:e2e
 ```
 
-## Deployment
+**API Overview (Highlights)**
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **Auth**: `POST /auth/register`, `POST /auth/login`, `GET /auth/me` (protected)
+- **Users**: `GET /users/profile`, `PATCH /users/profile` (protected)
+- **Workouts**: `POST /workouts`, `GET /workouts`, `GET /workouts/:id`, `PATCH /workouts/:id`, `DELETE /workouts/:id`, `GET /workouts/last-30-days`, `GET /workouts/stats` (all protected)
+- **AI**: `POST /ai/coach`, `POST /ai/coach/stream` (protected)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Controllers are intentionally thin — validation and auth live in DTOs, guards, and services.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+**Implementation Plan**
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- The full, detailed implementation plan is available in: [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
+- Key milestones: setup/config, users, auth, workouts, AI, auth sweep, testing.
 
-## Resources
+**Suggested Build Order**
 
-Check out a few resources that may come in handy when working with NestJS:
+- **1**: Setup and global config
+- **2**: Users module
+- **3**: Auth module + guards
+- **4**: Profile endpoints
+- **5**: Workout CRUD
+- **6**: Workout stats + recent history
+- **7**: AI coaching (non-streaming)
+- **8**: AI streaming
+- **9**: Final auth sweep and verification
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**Notes & Conventions**
 
-## Support
+- **Never** return plaintext passwords; only hashed passwords are stored.
+- **Ownership**: all workout queries are filtered by authenticated user ID; do not accept `userId` from the client.
+- **Validation**: use `class-validator` decorators on DTOs and enable global `ValidationPipe`.
+- **OpenAI**: prompt-building is isolated in `AiService`; streaming uses SSE-compatible chunking.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**Next Steps**
 
-## Stay in touch
+- Review the `IMPLEMENTATION_PLAN.md` and let me know if you want me to:
+  - scaffold missing modules and DTOs,
+  - implement a specific chunk (users/auth/workouts/ai), or
+  - run the project locally and verify startup.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**License**
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- See project root for license information.
