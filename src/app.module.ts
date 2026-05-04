@@ -1,10 +1,31 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AiModule } from './ai/ai.module';
+import { AuthModule } from './auth/auth.module';
+import configuration, { validateEnvironment } from './config/configuration';
+import { UsersModule } from './users/users.module';
+import { WorkoutsModule } from './workouts/workouts.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+      validate: validateEnvironment,
+    }),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.getOrThrow<string>('database.uri'),
+        serverSelectionTimeoutMS: 5000,
+        retryAttempts: 1,
+      }),
+    }),
+    UsersModule,
+    AuthModule,
+    WorkoutsModule,
+    AiModule,
+  ],
 })
 export class AppModule {}
