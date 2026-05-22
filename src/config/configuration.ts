@@ -26,6 +26,10 @@ export default () => ({
   app: {
     port: Number(process.env.PORT ?? 3000),
     apiPrefix: 'api/v1',
+    corsOrigins:
+      process.env.CORS_ORIGINS?.split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean) ?? [],
   },
   database: {
     uri: process.env.MONGO_URI,
