@@ -29,6 +29,15 @@ interface MostFrequentExerciseResult {
   count: number;
 }
 
+interface WorkoutListFilter {
+  userId: Types.ObjectId;
+  date?: { $gte?: Date; $lte?: Date };
+  'exercises.name'?: { $regex: string; $options: string };
+  $and?: Array<{
+    'exercises.name': { $regex: string; $options: string };
+  }>;
+}
+
 @Injectable()
 export class WorkoutsService {
   constructor(
@@ -57,7 +66,7 @@ export class WorkoutsService {
     const page = workoutQueryDto.page;
     const limit = workoutQueryDto.limit;
     const skip = (page - 1) * limit;
-    const filter = { userId: userObjectId };
+    const filter = this.buildWorkoutFilter(userObjectId, workoutQueryDto);
 
     const [data, total] = await Promise.all([
       this.workoutModel
@@ -178,6 +187,71 @@ export class WorkoutsService {
       .exec();
 
     return result?._id ?? null;
+  }
+
+  private buildWorkoutFilter(
+    userId: Types.ObjectId,
+    workoutQueryDto: WorkoutQueryDto,
+  ): WorkoutListFilter {
+    const filter: WorkoutListFilter = { userId };
+    const exerciseConditions: NonNullable<WorkoutListFilter['$and']> = [];
+    const dateFilter: { $gte?: Date; $lte?: Date } = {};
+
+    if (workoutQueryDto.search?.trim()) {
+      exerciseConditions.push({
+        'exercises.name': {
+          $regex: this.escapeRegex(workoutQueryDto.search.trim()),
+          $options: 'i',
+        },
+      });
+    }
+
+    if (workoutQueryDto.exercise?.trim()) {
+      exerciseConditions.push({
+        'exercises.name': {
+          $regex: `^${this.escapeRegex(workoutQueryDto.exercise.trim())}$`,
+          $options: 'i',
+        },
+      });
+    }
+
+    if (workoutQueryDto.from) {
+      dateFilter.$gte = this.parseStartDate(workoutQueryDto.from);
+    }
+
+    if (workoutQueryDto.to) {
+      dateFilter.$lte = this.parseEndDate(workoutQueryDto.to);
+    }
+
+    if (dateFilter.$gte || dateFilter.$lte) {
+      filter.date = dateFilter;
+    }
+
+    if (exerciseConditions.length === 1) {
+      Object.assign(filter, exerciseConditions[0]);
+    } else if (exerciseConditions.length > 1) {
+      filter.$and = exerciseConditions;
+    }
+
+    return filter;
+  }
+
+  private parseStartDate(value: string): Date {
+    const date = new Date(value);
+    date.setUTCHours(0, 0, 0, 0);
+
+    return date;
+  }
+
+  private parseEndDate(value: string): Date {
+    const date = new Date(value);
+    date.setUTCHours(23, 59, 59, 999);
+
+    return date;
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private getWeekStart(): Date {

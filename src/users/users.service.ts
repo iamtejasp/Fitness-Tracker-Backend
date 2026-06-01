@@ -14,6 +14,11 @@ interface CreateUserInput {
   password: string;
 }
 
+interface PasswordResetInput {
+  otpHash: string;
+  otpExpiresAt: Date;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -45,6 +50,17 @@ export class UsersService {
     }
 
     return query.exec();
+  }
+
+  async findByEmailForPasswordReset(
+    email: string,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({ email: this.normalizeEmail(email) })
+      .select(
+        '+password +passwordResetOtpHash +passwordResetOtpExpiresAt +passwordResetTokenHash +passwordResetTokenExpiresAt',
+      )
+      .exec();
   }
 
   async findById(userId: string): Promise<UserDocument> {
@@ -93,6 +109,53 @@ export class UsersService {
       this.handleDuplicateEmail(error);
       throw error;
     }
+  }
+
+  async setPasswordReset(
+    userId: string,
+    passwordResetInput: PasswordResetInput,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        passwordResetOtpHash: passwordResetInput.otpHash,
+        passwordResetOtpExpiresAt: passwordResetInput.otpExpiresAt,
+        $unset: { passwordResetTokenHash: '' },
+      })
+      .exec();
+  }
+
+  async setPasswordResetToken(
+    userId: string,
+    resetTokenHash: string,
+    resetTokenExpiresAt: Date,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        passwordResetTokenHash: resetTokenHash,
+        passwordResetTokenExpiresAt: resetTokenExpiresAt,
+        $unset: {
+          passwordResetOtpHash: '',
+          passwordResetOtpExpiresAt: '',
+        },
+      })
+      .exec();
+  }
+
+  async updatePasswordAndClearReset(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(userId, {
+        password: passwordHash,
+        $unset: {
+          passwordResetOtpHash: '',
+          passwordResetOtpExpiresAt: '',
+          passwordResetTokenHash: '',
+          passwordResetTokenExpiresAt: '',
+        },
+      })
+      .exec();
   }
 
   private normalizeEmail(email: string): string {

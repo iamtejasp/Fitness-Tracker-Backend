@@ -44,3 +44,4 @@ export class Workout {
 export const WorkoutSchema = SchemaFactory.createForClass(Workout);
 
 WorkoutSchema.index({ userId: 1, date: -1 });
+WorkoutSchema.index({ userId: 1, 'exercises.name': 1 });
