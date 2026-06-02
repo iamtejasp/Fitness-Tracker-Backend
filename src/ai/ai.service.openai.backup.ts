@@ -1,6 +1,6 @@
 import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import { CoachMessageDto } from './dto/coach-message.dto';
 import { WorkoutDocument } from '../workouts/schemas/workout.schema';
 import { WorkoutsService } from '../workouts/workouts.service';
@@ -10,22 +10,19 @@ export interface CoachResponse {
 }
 
 @Injectable()
-export class AiService {
-  private readonly logger = new Logger(AiService.name);
-  private readonly gemini: GoogleGenAI;
+export class OpenAiBackupService {
+  private readonly logger = new Logger(OpenAiBackupService.name);
+  private readonly openai: OpenAI;
   private readonly model: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly workoutsService: WorkoutsService,
   ) {
-    this.gemini = new GoogleGenAI({
-      apiKey: this.configService.getOrThrow<string>('gemini.apiKey'),
+    this.openai = new OpenAI({
+      apiKey: this.configService.getOrThrow<string>('openai.apiKey'),
     });
-    this.model = this.configService.get<string>(
-      'gemini.model',
-      'gemini-2.5-flash',
-    );
+    this.model = this.configService.get<string>('openai.model', 'gpt-4.1-mini');
   }
 
   async coach(
@@ -35,23 +32,20 @@ export class AiService {
     const prompt = await this.buildCoachPrompt(userId, coachMessageDto.message);
 
     try {
-      const response = await this.gemini.models.generateContent({
+      const completion = await this.openai.chat.completions.create({
         model: this.model,
-        contents: prompt.contents,
-        config: {
-          systemInstruction: prompt.systemInstruction,
-          temperature: 0.4,
-          maxOutputTokens: 220,
-        },
+        messages: prompt,
+        temperature: 0.4,
+        max_tokens: 220,
       });
 
       return {
         advice:
-          response.text?.trim() ??
+          completion.choices[0]?.message.content?.trim() ??
           'I could not generate coaching advice right now.',
       };
     } catch (error) {
-      this.logger.error('Gemini coach request failed', error);
+      this.logger.error('OpenAI coach request failed', error);
       throw new BadGatewayException('AI coaching service is unavailable');
     }
   }
@@ -63,25 +57,23 @@ export class AiService {
     const prompt = await this.buildCoachPrompt(userId, coachMessageDto.message);
 
     try {
-      const stream = await this.gemini.models.generateContentStream({
+      const stream = await this.openai.chat.completions.create({
         model: this.model,
-        contents: prompt.contents,
-        config: {
-          systemInstruction: prompt.systemInstruction,
-          temperature: 0.4,
-          maxOutputTokens: 220,
-        },
+        messages: prompt,
+        temperature: 0.4,
+        max_tokens: 220,
+        stream: true,
       });
 
       for await (const chunk of stream) {
-        const content = chunk.text;
+        const content = chunk.choices[0]?.delta?.content;
 
         if (content) {
           yield content;
         }
       }
     } catch (error) {
-      this.logger.error('Gemini streaming coach request failed', error);
+      this.logger.error('OpenAI streaming coach request failed', error);
       throw new BadGatewayException('AI coaching service is unavailable');
     }
   }
@@ -90,16 +82,22 @@ export class AiService {
     const workouts = await this.workoutsService.getLast30Days(userId);
     const workoutSummary = this.formatWorkoutSummary(workouts);
 
-    return {
-      systemInstruction:
-        'You are an expert fitness coach for a mobile fitness tracker app. ' +
-        'Use the workout history to detect plateaus, suggest progressive ' +
-        'overload, and give actionable advice. Keep every answer concise ' +
-        'and practical in 3-5 lines.',
-      contents:
-        `User question: ${message}\n\n` +
-        `Last 30 days workout history:\n${workoutSummary}`,
-    };
+    return [
+      {
+        role: 'system' as const,
+        content:
+          'You are an expert fitness coach for a mobile fitness tracker app. ' +
+          'Use the workout history to detect plateaus, suggest progressive ' +
+          'overload, and give actionable advice. Keep every answer concise ' +
+          'and practical in 3-5 lines.',
+      },
+      {
+        role: 'user' as const,
+        content:
+          `User question: ${message}\n\n` +
+          `Last 30 days workout history:\n${workoutSummary}`,
+      },
+    ];
   }
 
   private formatWorkoutSummary(workouts: WorkoutDocument[]): string {

@@ -2,19 +2,19 @@
 
 **Project**
 
-- **Description**: Production-ready NestJS backend for a mobile fitness tracker, implementing JWT auth, MongoDB persistence (Mongoose), workout CRUD, user profiles, and OpenAI-powered coaching.
+- **Description**: Production-ready NestJS backend for a mobile fitness tracker, implementing JWT auth, MongoDB persistence (Mongoose), workout CRUD, user profiles, and Gemini-powered coaching.
 
 **Features**
 
 - **Authentication**: JWT-based sign-up, sign-in, and protected routes.
 - **Persistence**: Mongoose schemas for users and workouts with ownership enforcement.
 - **Workouts**: Create, read, update, delete, pagination, recent history, and stats.
-- **AI Coaching**: OpenAI-driven coaching endpoint and SSE-compatible streaming support.
+- **AI Coaching**: Google Gemini AI Studio coaching endpoint and SSE-compatible streaming support.
 - **Validation & Errors**: DTO validation via `class-validator` and global error handling.
 
 **Prerequisites**
 
-- **Node.js**: v16+ recommended.
+- **Node.js**: v20+ recommended. The Google GenAI SDK requires Node 20 or newer.
 - **MongoDB**: Local or remote instance reachable via `MONGO_URI`.
 
 **Install**
@@ -25,13 +25,13 @@ npm install
 
 **Required Dependencies**
 
-- **Runtime**: `@nestjs/config`, `@nestjs/mongoose`, `mongoose`, `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `bcrypt`, `class-validator`, `class-transformer`, `openai`
+- **Runtime**: `@nestjs/config`, `@nestjs/mongoose`, `mongoose`, `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `bcrypt`, `class-validator`, `class-transformer`, `@google/genai`, `openai`
 - **Dev**: `@types/bcrypt`, `@types/passport-jwt`
 
 You can install them with:
 
 ```bash
-npm install @nestjs/config @nestjs/mongoose mongoose @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt class-validator class-transformer openai
+npm install @nestjs/config @nestjs/mongoose mongoose @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt class-validator class-transformer @google/genai openai
 npm install -D @types/bcrypt @types/passport-jwt
 ```
 
@@ -43,8 +43,10 @@ npm install -D @types/bcrypt @types/passport-jwt
   - `MONGO_URI` — MongoDB connection string
   - `JWT_SECRET` — secret for signing JWTs
   - `JWT_EXPIRES_IN` — token expiry (e.g., `7d`)
-  - `OPENAI_API_KEY` — API key for OpenAI
-  - `OPENAI_MODEL` — model to use (e.g., `gpt-4.1-mini`)
+  - `GEMINI_API_KEY` — Google AI Studio API key for Gemini
+  - `GEMINI_MODEL` — model to use (default: `gemini-2.5-flash`)
+  - `OPENAI_API_KEY` — optional backup key for the preserved OpenAI service
+  - `OPENAI_MODEL` — optional backup OpenAI model (e.g., `gpt-4.1-mini`)
 
 **Run**
 
@@ -98,7 +100,7 @@ Controllers are intentionally thin — validation and auth live in DTOs, guards,
 - **Never** return plaintext passwords; only hashed passwords are stored.
 - **Ownership**: all workout queries are filtered by authenticated user ID; do not accept `userId` from the client.
 - **Validation**: use `class-validator` decorators on DTOs and enable global `ValidationPipe`.
-- **OpenAI**: prompt-building is isolated in `AiService`; streaming uses SSE-compatible chunking.
+- **Gemini**: prompt-building is isolated in `AiService`; streaming uses SSE-compatible chunking. The previous OpenAI implementation is preserved in `src/ai/ai.service.openai.backup.ts`.
 
 **Next Steps**
 

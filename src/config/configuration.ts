@@ -3,7 +3,7 @@ type EnvironmentVariables = Record<string, string | undefined>;
 const requiredEnvironmentVariables = [
   'MONGO_URI',
   'JWT_SECRET',
-  'OPENAI_API_KEY',
+  'GEMINI_API_KEY',
 ] as const;
 
 export function validateEnvironment(
@@ -37,6 +37,10 @@ export default () => ({
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+  },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
