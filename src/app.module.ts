@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import configuration, { validateEnvironment } from './config/configuration';
+import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { WorkoutsModule } from './workouts/workouts.module';
 
@@ -26,6 +27,7 @@ import { WorkoutsModule } from './workouts/workouts.module';
     AuthModule,
     WorkoutsModule,
     AiModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -69,6 +69,52 @@ npm run test
 npm run test:e2e
 ```
 
+**Free Deployment: Render + MongoDB Atlas**
+
+For a free demo deployment, use:
+
+- **Backend host**: Render Free Web Service
+- **Database**: MongoDB Atlas Free Cluster (`M0`)
+
+Render free web services support Node.js/NestJS and provide a public `onrender.com` URL, but they sleep after 15 minutes of inactivity and can take about a minute to wake up. This is acceptable for portfolio/demo usage, not production traffic.
+
+MongoDB Atlas free clusters never expire, but they are intended for development/small demos and have shared-resource limits.
+
+This backend is Render-ready:
+
+- The server binds to `0.0.0.0`.
+- The app reads Render's `PORT` environment variable.
+- Public health check: `GET /api/v1/health`.
+
+Required Render environment variables:
+
+```bash
+MONGO_URI=<mongodb-connection-string>
+JWT_SECRET=<long-random-secret>
+JWT_EXPIRES_IN=7d
+GEMINI_API_KEY=<google-ai-studio-key>
+GEMINI_MODEL=gemini-2.5-flash
+CORS_ORIGINS=<comma-separated-mobile-or-web-origins>
+NODE_ENV=production
+```
+
+Render settings:
+
+- **Service type**: Web Service
+- **Root directory**: `backend` if deploying from the full monorepo
+- **Build command**: `npm ci --include=dev && npm run build`
+- **Start command**: `npm run start:prod`
+- **Health check path**: `/api/v1/health`
+- **Instance type**: Free
+
+Use `npm ci --include=dev` because NestJS builds with `@nestjs/cli`, which is a dev dependency. If Render installs production-only dependencies during build, `nest build` fails with `sh: 1: nest: not found`.
+
+After deploy, verify:
+
+```bash
+curl https://<your-render-service>.onrender.com/api/v1/health
+```
+
 **API Overview (Highlights)**
 
 - **Auth**: `POST /auth/register`, `POST /auth/login`, `GET /auth/me` (protected)
