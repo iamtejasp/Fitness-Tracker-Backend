@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -17,6 +25,19 @@ export class AiController {
     @Body() coachMessageDto: CoachMessageDto,
   ) {
     return this.aiService.coach(currentUser.sub, coachMessageDto);
+  }
+
+  @Get('coach/history')
+  getCoachHistory(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.aiService.getCoachHistory(
+      currentUser.sub,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 50,
+    );
   }
 
   @Post('coach/stream')
