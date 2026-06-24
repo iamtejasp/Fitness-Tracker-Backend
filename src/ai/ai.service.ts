@@ -35,6 +35,11 @@ export interface CoachHistoryMessage {
   updatedAt?: Date;
 }
 
+const COACH_GENERATION_CONFIG = {
+  temperature: 0.45,
+  maxOutputTokens: 4096,
+} as const;
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -69,8 +74,7 @@ export class AiService {
         contents: prompt.contents,
         config: {
           systemInstruction: prompt.systemInstruction,
-          temperature: 0.4,
-          maxOutputTokens: 900,
+          ...COACH_GENERATION_CONFIG,
         },
       });
 
@@ -107,8 +111,7 @@ export class AiService {
         contents: prompt.contents,
         config: {
           systemInstruction: prompt.systemInstruction,
-          temperature: 0.4,
-          maxOutputTokens: 900,
+          ...COACH_GENERATION_CONFIG,
         },
       });
 
@@ -193,17 +196,20 @@ export class AiService {
         'Use the user question and workout history to give detailed, practical, personalized coaching. ' +
         'Always inspect recent exercise trends before answering. If the user asks how to improve an exercise, ' +
         'identify whether performance is progressing, stalled, or missing enough data. ' +
-        'Format the response with clear short sections: Assessment, What to do next, 4-week plan, and Form/recovery checks. ' +
-        'Give concrete sets, reps, load changes, progression rules, deload guidance, and recovery advice where relevant. ' +
-        'Do not give generic one-line advice. Keep it readable, but detailed enough for the user to act on immediately.',
+        'Write like a senior strength coach: specific, explanatory, and directly actionable. ' +
+        'Do not give generic one-line advice, do not stop after a partial sentence, and do not answer with only a summary. ' +
+        'Give concrete sets, reps, load changes, progression rules, deload guidance, technique cues, warm-up guidance, and recovery advice where relevant.',
       contents:
         `User question: ${message}\n\n` +
         `Last 30 days workout history:\n${workoutSummary}\n\n` +
         'Response requirements:\n' +
-        '- Answer in detail, around 8-14 concise bullet points or short paragraphs.\n' +
+        '- Answer in a complete, detailed format of roughly 600-1000 words when the question asks for improvement, planning, plateau help, or training advice.\n' +
+        '- Use these sections when relevant: Quick assessment, What your recent data suggests, Main recommendation, 4-week progression plan, Technique cues, Recovery checks, What to track next.\n' +
+        '- Include at least 12 practical bullets or short paragraphs unless the user asks for a very short answer.\n' +
         '- Ground the advice in the workout history above.\n' +
-        '- If a plateau is visible, explain the likely cause and exact progression strategy.\n' +
-        '- If data is missing, say what to track next and still provide a safe starter plan.\n' +
+        '- If a plateau is visible, explain the likely cause and exact progression strategy with week-by-week loading guidance.\n' +
+        '- If the user asks about a specific lift, include warm-up sets, working sets, rep targets, progression rules, accessory exercises, and form cues.\n' +
+        '- If data is missing, say what data is missing and still provide a safe starter plan.\n' +
         '- Avoid medical claims and recommend professional help for pain or injury symptoms.',
     };
   }
